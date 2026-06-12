@@ -1,8 +1,7 @@
 import time
 from loguru import logger
 from airo_robots.manipulators.hardware.ur_rtde import URrtde
-from lerobot.teleoperators.phone import PhoneConfig
-from lerobot.teleoperators.phone.config_phone import PhoneOS
+from airo_teleop_phone import PhoneConfig, PhoneOS
 
 from airo_teleop_agents.phone_teleop_agents import Phone4PositionManipulator
 

@@ -14,11 +14,11 @@ class PhoneTeleopDevice(TeleopDevice):
 
     def __init__(self, phone_config, auto_connect: bool = True) -> None:
         try:
-            from lerobot.teleoperators.phone import Phone
-        except Exception as exc:
+            from airo_teleop_phone import Phone
+        except ImportError as exc:
             raise ImportError(
-                "PhoneTeleopDevice requires lerobot with phone extras. "
-                "Install with: pip install 'lerobot[phone]'."
+                "PhoneTeleopDevice requires airo_teleop_phone. "
+                "Install with: pip install -e airo-teleop-devices/"
             ) from exc
 
         self._phone = Phone(phone_config)

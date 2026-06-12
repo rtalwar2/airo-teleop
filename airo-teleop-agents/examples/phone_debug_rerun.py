@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import pathlib
 import time
 from typing import Any
 
@@ -7,9 +8,8 @@ import numpy as np
 
 import rerun as rr
 
-from lerobot.teleoperators.phone import PhoneConfig
-from lerobot.teleoperators.phone.config_phone import PhoneOS
-from lerobot.utils.rotation import Rotation
+from airo_teleop_phone import PhoneConfig, PhoneOS
+from airo_teleop_phone.rotation import Rotation
 
 from airo_teleop_agents.phone_teleop_agents import Phone4PositionManipulator
 
@@ -44,6 +44,10 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--disable-rotations", action="store_true", default=False)
     parser.add_argument("--axes-length", type=float, default=0.05)
     parser.add_argument("--no-spawn", action="store_true", help="Do not spawn the Rerun viewer.")
+    parser.add_argument(
+        "--urdf",
+        help="Path to a URDF file to visualize the robot.",
+    )
     return parser.parse_args()
 
 
@@ -136,6 +140,41 @@ def _get_phone_impl(teleop_agent: Phone4PositionManipulator) -> Any:
     return getattr(phone, "_phone_impl", None)
 
 
+# ── placo-based IK from TCP pose ─────────────────────────────────────────
+
+_ik_solver: tuple | None = None  # (robot, solver, tip, joint_names)
+
+
+def _init_ik_solver(urdf_path: str, ee_frame: str | None = None) -> None:
+    global _ik_solver
+    import placo
+
+    robot = placo.RobotWrapper(urdf_path)
+    solver = placo.KinematicsSolver(robot)
+    solver.mask_fbase(True)
+    joint_names = list(robot.joint_names())
+    # Auto-detect EE: use last frame in the kinematic chain
+    if ee_frame is None:
+        ee_frame = list(robot.frame_names())[-1]
+    tip = solver.add_frame_task(ee_frame, np.eye(4))
+    _ik_solver = (robot, solver, tip, joint_names)
+    print(f"  IK target frame: {ee_frame}")
+
+
+def _ik_from_pose(target_pose: np.ndarray) -> list:
+    """Solve IK with placo, returning joint angles in radians."""
+    if _ik_solver is None:
+        return []
+    robot, solver, tip, joint_names = _ik_solver
+
+    tip.T_world_frame = target_pose
+    tip.configure("tip", "soft", 1.0, 0.01)
+    solver.solve(True)
+    robot.update_kinematics()
+
+    return [robot.get_joint(name) for name in joint_names]
+
+
 def main() -> None:
     args = _parse_args()
 
@@ -160,6 +199,31 @@ def main() -> None:
     )
 
     rr.init("phone_teleop_debug", spawn=not args.no_spawn)
+
+    # ── Load URDF (optional) ─────────────────────────────────────
+    urdf_tree = None
+    urdf_path_str = None
+    if args.urdf:
+        urdf_path = pathlib.Path(args.urdf).resolve()
+        if not urdf_path.exists():
+            print(f"WARNING: URDF not found: {urdf_path}")
+        else:
+            try:
+                urdf_path_str = str(urdf_path)
+                urdf_tree = rr.urdf.UrdfTree.from_file_path(urdf_path_str)
+                urdf_tree.log_urdf_to_recording()
+                revolute = [j for j in urdf_tree.joints() if j.joint_type == "revolute"]
+                print(f"URDF loaded: {urdf_tree.name} — {len(revolute)} revolute joints")
+                # Initialise placo IK solver (for visualisation without real robot)
+                try:
+                    _init_ik_solver(urdf_path_str)
+                    print("placo IK solver ready (warm-start from home pose)")
+                except Exception as e:
+                    print(f"WARNING: placo IK not available: {e}")
+            except Exception as e:
+                print(f"WARNING: Failed to load URDF: {e}")
+                urdf_tree = None
+
     rr.log("config/phone_os", rr.TextLog(phone_os.value))
     rr.log("config/translation_scale", rr.Scalars(args.translation_scale))
     rr.log("config/rotation_scale", rr.Scalars(args.rotation_scale))
@@ -272,6 +336,25 @@ def main() -> None:
                 rr.log("robot/rotation_delta_norm", rr.Scalars(rotation_delta_norm))
 
             rr.log("phone/enable_settle_active", rr.Scalars(float(getattr(teleop_agent, "_enable_time_s", None) is not None)))
+
+            # ── URDF joint animation ──────────────────────────────
+            if urdf_tree is not None:
+                try:
+                    revolute_joints = [j for j in urdf_tree.joints() if j.joint_type == "revolute"]
+                    # Try to get joint angles from the robot first
+                    if hasattr(pose_provider, "get_joint_configuration"):
+                        joint_vals = list(pose_provider.get_joint_configuration())
+                    elif _ik_solver is not None:
+                        # No real robot — solve IK from the TCP pose
+                        joint_vals = _ik_from_pose(desired_pose)
+                    else:
+                        joint_vals = [0.0] * len(revolute_joints)
+
+                    for joint, val in zip(revolute_joints, joint_vals[: len(revolute_joints)]):
+                        transform = joint.compute_transform(float(val), clamp=True)
+                        rr.log("robot/urdf/transforms", transform)
+                except Exception:
+                    pass
 
             _log_inputs(phone_device.last_raw_inputs)
 

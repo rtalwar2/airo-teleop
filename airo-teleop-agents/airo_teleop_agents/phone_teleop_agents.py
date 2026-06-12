@@ -8,7 +8,7 @@ from airo_teleop_agents.teleop_agent import TeleopAgent
 from airo_teleop_devices.phone_teleop_device import PhoneTeleopDevice
 from airo_robots.manipulators.position_manipulator import PositionManipulator
 from airo_typing import HomogeneousMatrixType
-from lerobot.utils.rotation import Rotation
+from airo_teleop_phone.rotation import Rotation
 
 
 class Phone4PositionManipulator(TeleopAgent):
