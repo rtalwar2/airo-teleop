@@ -6,6 +6,7 @@ Standalone phone teleoperator (iOS via HEBI, Android via WebXR/teleop).
 """
 
 import logging
+import pathlib
 import threading
 import time
 from typing import TYPE_CHECKING
@@ -203,7 +204,10 @@ class AndroidPhone(_PhoneBase):
     @check_if_already_connected
     def connect(self) -> None:
         logger.info("Starting teleop stream for Android...")
-        self._teleop = Teleop()
+        # Use bundled custom webui if available, else fall back to teleop default
+        _webui_dir = pathlib.Path(__file__).parent.parent / "teleop-webui"
+        frontend_dir = str(_webui_dir) if _webui_dir.exists() else None
+        self._teleop = Teleop(frontend_dir=frontend_dir)
         self._teleop.subscribe(self._callback)
         self._teleop_thread = threading.Thread(target=self._teleop.run, daemon=True)
         self._teleop_thread.start()
@@ -254,6 +258,8 @@ class AndroidPhone(_PhoneBase):
             "scale": float(msg.get("scale", 1.0)),
             "reservedButtonA": bool(msg.get("reservedButtonA", False)),
             "reservedButtonB": bool(msg.get("reservedButtonB", False)),
+            "startRecording": bool(msg.get("startRecording", False)),
+            "stopRecording": bool(msg.get("stopRecording", False)),
         }
 
         enable = bool(raw_inputs.get("move", False))
