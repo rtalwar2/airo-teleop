@@ -399,10 +399,13 @@ class TeleopUI extends HTMLElement {
             }));
         }
 
-        // Recording buttons
+        // Recording buttons (mutually exclusive)
         startRecordingButton.addEventListener('click', () => {
             this.recordingButtonActive = !this.recordingButtonActive;
             if (this.recordingButtonActive) {
+                // Deactivate stop if start is pressed
+                this.stopRecordingButtonActive = false;
+                stopRecordingButton.classList.remove('active');
                 startRecordingButton.classList.add('active');
             } else {
                 startRecordingButton.classList.remove('active');
@@ -415,6 +418,9 @@ class TeleopUI extends HTMLElement {
         stopRecordingButton.addEventListener('click', () => {
             this.stopRecordingButtonActive = !this.stopRecordingButtonActive;
             if (this.stopRecordingButtonActive) {
+                // Deactivate start if stop is pressed
+                this.recordingButtonActive = false;
+                startRecordingButton.classList.remove('active');
                 stopRecordingButton.classList.add('active');
             } else {
                 stopRecordingButton.classList.remove('active');
