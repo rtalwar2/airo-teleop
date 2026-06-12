@@ -2,7 +2,7 @@
 """
 Phone-based teleoperator (iOS via HEBI Mobile I/O, Android via WebXR/teleop package).
 
-Adapted from lerobot.teleoperators.phone — standalone version with zero lerobot dependency.
+Standalone phone teleoperator (iOS via HEBI, Android via WebXR/teleop).
 """
 
 import logging
@@ -39,7 +39,7 @@ def _require(pkg_name: str, import_name: str | None = None) -> None:
     if importlib.util.find_spec(name) is None:
         raise ImportError(
             f"'{pkg_name}' is required but not installed. "
-            f"Install with: pip install 'lerobot[phone]' (or pip install {pkg_name})"
+            f"Install with: pip install hebi-py teleop (or pip install {pkg_name})"
         )
 
 
@@ -109,10 +109,6 @@ class IOSPhone(_PhoneBase):
         self.calibrate()
 
     def calibrate(self) -> None:
-        print(
-            "Hold the phone so that: top edge points forward (robot +x) and "
-            "screen points up (robot +z)."
-        )
         print("Press and hold B1 in the HEBI Mobile I/O app to capture this pose...\n")
         position, rotation = self._wait_for_capture()
         self._calib_pos = position.copy()
@@ -215,10 +211,6 @@ class AndroidPhone(_PhoneBase):
         self.calibrate()
 
     def calibrate(self) -> None:
-        print(
-            "Hold the phone so that: top edge points forward (robot +x) and "
-            "screen points up (robot +z)."
-        )
         print("Touch and move on the WebXR page to capture this pose...\n")
         pos, rot = self._wait_for_capture()
         self._calib_pos = pos.copy()
