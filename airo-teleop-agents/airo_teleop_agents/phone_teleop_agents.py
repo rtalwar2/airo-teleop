@@ -8,7 +8,7 @@ from airo_teleop_agents.teleop_agent import TeleopAgent
 from airo_teleop_devices.phone_teleop_device import PhoneTeleopDevice
 from airo_robots.manipulators.position_manipulator import PositionManipulator
 from airo_typing import HomogeneousMatrixType
-from lerobot.utils.rotation import Rotation
+from airo_teleop_phone.rotation import Rotation
 
 
 class Phone4PositionManipulator(TeleopAgent):
@@ -29,7 +29,7 @@ class Phone4PositionManipulator(TeleopAgent):
         Teleop agent that maps a phone's calibrated pose to a PositionManipulator TCP pose.
 
         :param position_manipulator: airo_robots PositionManipulator object, like URrtde
-        :param phone_config: lerobot PhoneConfig instance
+        :param phone_config: airo_teleop_phone.PhoneConfig instance
         :param translation_scale: Scale factor for translation deltas in meters
         :param rotation_scale: Scale factor for rotation deltas in radians
         :param phone_forward_axis: Axis of the base frame the phone top points to at init: "+x", "+y", "-x", "-y"
