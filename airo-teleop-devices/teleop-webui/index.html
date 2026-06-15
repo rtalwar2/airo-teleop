@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teleop</title>
-    <script src="/assets/teleop-ui.js?v=3"></script>
+    <script src="/assets/teleop-ui.js?v=4"></script>
 
     <style>
         * {
@@ -375,6 +375,7 @@
                                         reservedButtonA: teleopFrontEnd.isReservedButtonAActive(),
                                         reservedButtonB: teleopFrontEnd.isReservedButtonBActive(),
                                         startRecording: teleopFrontEnd.isRecordingButtonActive(),
+                                        cancelRecording: teleopFrontEnd.isCancelRecordingButtonActive(),
                                         stopRecording: teleopFrontEnd.isStopRecordingButtonActive(),
                                         device: isVRDevice ? 'VR' : 'Phone',
                                         message: message

@@ -259,6 +259,7 @@ class AndroidPhone(_PhoneBase):
             "reservedButtonA": bool(msg.get("reservedButtonA", False)),
             "reservedButtonB": bool(msg.get("reservedButtonB", False)),
             "startRecording": bool(msg.get("startRecording", False)),
+            "cancelRecording": bool(msg.get("cancelRecording", False)),
             "stopRecording": bool(msg.get("stopRecording", False)),
         }
 

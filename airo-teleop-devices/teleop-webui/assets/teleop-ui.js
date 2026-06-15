@@ -11,6 +11,7 @@ class TeleopUI extends HTMLElement {
         this.reservedButtonBActive = false;
         this.recordingButtonActive = false;
         this.stopRecordingButtonActive = false;
+        this.cancelRecordingButtonActive = false;
         this.localStats = { position: { x: 0, y: 0, z: 0 }, orientation: { x: 0, y: 0, z: 0, w: 0 }, fps: 0 };
         this.serverDiagnostics = {};
 
@@ -220,6 +221,14 @@ class TeleopUI extends HTMLElement {
                     background: #dc2626;
                 }
                 
+                .recording-button.cancel {
+                    background: #f59e0b;
+                }
+                
+                .recording-button.cancel.active {
+                    background: #d97706;
+                }
+                
                 @media (min-width: 768px) {
                     .info-section {
                         flex-direction: row;
@@ -281,6 +290,9 @@ class TeleopUI extends HTMLElement {
                     <button class="recording-button start" id="startRecordingButton">
                         ● Start
                     </button>
+                    <button class="recording-button cancel" id="cancelRecordingButton">
+                        ✕ Cancel
+                    </button>
                     <button class="recording-button stop" id="stopRecordingButton">
                         ■ Stop
                     </button>
@@ -307,6 +319,7 @@ class TeleopUI extends HTMLElement {
         const reservedButtonA = this.shadowRoot.getElementById('reservedButtonA');
         const reservedButtonB = this.shadowRoot.getElementById('reservedButtonB');
         const startRecordingButton = this.shadowRoot.getElementById('startRecordingButton');
+        const cancelRecordingButton = this.shadowRoot.getElementById('cancelRecordingButton');
         const stopRecordingButton = this.shadowRoot.getElementById('stopRecordingButton');
 
         // Exit button
@@ -400,33 +413,39 @@ class TeleopUI extends HTMLElement {
         }
 
         // Recording buttons (mutually exclusive)
+        const deactivateAll = () => {
+            this.recordingButtonActive = false;
+            this.stopRecordingButtonActive = false;
+            this.cancelRecordingButtonActive = false;
+            startRecordingButton.classList.remove('active');
+            stopRecordingButton.classList.remove('active');
+            cancelRecordingButton.classList.remove('active');
+        };
+
         startRecordingButton.addEventListener('click', () => {
-            this.recordingButtonActive = !this.recordingButtonActive;
-            if (this.recordingButtonActive) {
-                // Deactivate stop if start is pressed
-                this.stopRecordingButtonActive = false;
-                stopRecordingButton.classList.remove('active');
-                startRecordingButton.classList.add('active');
-            } else {
-                startRecordingButton.classList.remove('active');
-            }
+            deactivateAll();
+            this.recordingButtonActive = true;
+            startRecordingButton.classList.add('active');
             this.dispatchEvent(new CustomEvent('recordingstartchange', {
-                detail: { active: this.recordingButtonActive }
+                detail: { active: true }
+            }));
+        });
+
+        cancelRecordingButton.addEventListener('click', () => {
+            deactivateAll();
+            this.cancelRecordingButtonActive = true;
+            cancelRecordingButton.classList.add('active');
+            this.dispatchEvent(new CustomEvent('recordingcancelchange', {
+                detail: { active: true }
             }));
         });
 
         stopRecordingButton.addEventListener('click', () => {
-            this.stopRecordingButtonActive = !this.stopRecordingButtonActive;
-            if (this.stopRecordingButtonActive) {
-                // Deactivate start if stop is pressed
-                this.recordingButtonActive = false;
-                startRecordingButton.classList.remove('active');
-                stopRecordingButton.classList.add('active');
-            } else {
-                stopRecordingButton.classList.remove('active');
-            }
+            deactivateAll();
+            this.stopRecordingButtonActive = true;
+            stopRecordingButton.classList.add('active');
             this.dispatchEvent(new CustomEvent('recordingstopchange', {
-                detail: { active: this.stopRecordingButtonActive }
+                detail: { active: true }
             }));
         });
 
@@ -509,6 +528,10 @@ class TeleopUI extends HTMLElement {
 
     isStopRecordingButtonActive() {
         return this.stopRecordingButtonActive;
+    }
+
+    isCancelRecordingButtonActive() {
+        return this.cancelRecordingButtonActive;
     }
 }
 
