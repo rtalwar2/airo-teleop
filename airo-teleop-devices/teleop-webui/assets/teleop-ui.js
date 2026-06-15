@@ -228,6 +228,11 @@ class TeleopUI extends HTMLElement {
                 .recording-button.cancel.active {
                     background: #d97706;
                 }
+
+                /* CSS helper to hide/show buttons */
+                .recording-button.hidden {
+                    display: none;
+                }
                 
                 @media (min-width: 768px) {
                     .info-section {
@@ -290,10 +295,11 @@ class TeleopUI extends HTMLElement {
                     <button class="recording-button start" id="startRecordingButton">
                         ● Start
                     </button>
-                    <button class="recording-button cancel" id="cancelRecordingButton">
+                    <!-- Cancel and Stop buttons start with the 'hidden' class -->
+                    <button class="recording-button cancel hidden" id="cancelRecordingButton">
                         ✕ Cancel
                     </button>
-                    <button class="recording-button stop" id="stopRecordingButton">
+                    <button class="recording-button stop hidden" id="stopRecordingButton">
                         ■ Stop
                     </button>
                 </div>
@@ -426,6 +432,12 @@ class TeleopUI extends HTMLElement {
             deactivateAll();
             this.recordingButtonActive = true;
             startRecordingButton.classList.add('active');
+
+            // Hide Start, show Cancel and Stop
+            startRecordingButton.classList.add('hidden');
+            cancelRecordingButton.classList.remove('hidden');
+            stopRecordingButton.classList.remove('hidden');
+
             this.dispatchEvent(new CustomEvent('recordingstartchange', {
                 detail: { active: true }
             }));
@@ -435,6 +447,12 @@ class TeleopUI extends HTMLElement {
             deactivateAll();
             this.cancelRecordingButtonActive = true;
             cancelRecordingButton.classList.add('active');
+
+            // Show Start, hide Cancel and Stop
+            startRecordingButton.classList.remove('hidden');
+            cancelRecordingButton.classList.add('hidden');
+            stopRecordingButton.classList.add('hidden');
+
             this.dispatchEvent(new CustomEvent('recordingcancelchange', {
                 detail: { active: true }
             }));
@@ -444,6 +462,12 @@ class TeleopUI extends HTMLElement {
             deactivateAll();
             this.stopRecordingButtonActive = true;
             stopRecordingButton.classList.add('active');
+
+            // Show Start, hide Cancel and Stop
+            startRecordingButton.classList.remove('hidden');
+            cancelRecordingButton.classList.add('hidden');
+            stopRecordingButton.classList.add('hidden');
+
             this.dispatchEvent(new CustomEvent('recordingstopchange', {
                 detail: { active: true }
             }));
@@ -473,20 +497,17 @@ class TeleopUI extends HTMLElement {
         statsContent.textContent = '';
         if (stats.position) {
             const position = stats.position;
-            statsContent.textContent += `Position: X: ${position.x.toFixed(3)}, Y: ${position.y.toFixed(3)}, Z: ${position.z.toFixed(3)}
-`;
+            statsContent.textContent += `Position: X: ${position.x.toFixed(3)}, Y: ${position.y.toFixed(3)}, Z: ${position.z.toFixed(3)}\n`;
         }
 
         if (stats.orientation) {
             const orientation = stats.orientation;
-            statsContent.textContent += `Orientation: X: ${orientation.x.toFixed(2)}, Y: ${orientation.y.toFixed(2)}, Z: ${orientation.z.toFixed(2)}, W: ${orientation.w.toFixed(2)}
-`;
+            statsContent.textContent += `Orientation: X: ${orientation.x.toFixed(2)}, Y: ${orientation.y.toFixed(2)}, Z: ${orientation.z.toFixed(2)}, W: ${orientation.w.toFixed(2)}\n`;
         }
 
         if (stats.fps) {
             const fps = stats.fps.toFixed(2);
-            statsContent.textContent += `FPS: ${fps}
-`;
+            statsContent.textContent += `FPS: ${fps}\n`;
         }
     }
 
